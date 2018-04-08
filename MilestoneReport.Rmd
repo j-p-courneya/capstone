@@ -36,12 +36,12 @@ The data for the project comes from corpora that were collected from publicly av
 list.files(pattern = "^en_US.*txt$")
 ```
 
-Using `readLines` the text files are imported as character vectors.
+Using `readLines` the text files are read as saved as character vectors.
 
 ```{r}
-blogs <- readLines("en_US.blogs.txt", encoding = "UTF-8", skipNul = TRUE)
-news <- readLines("en_US.news.txt", encoding = "UTF-8", skipNul = TRUE)
-twitter <- readLines("en_US.twitter.txt", encoding = "UTF-8", skipNul = TRUE)
+blogs <- readLines("./en_US/en_US.blogs.txt", encoding = "UTF-8", skipNul = TRUE)
+news <- readLines("./en_US/en_US.news.txt", encoding = "UTF-8", skipNul = TRUE)
+twitter <- readLines("./en_US/en_US.twitter.txt", encoding = "UTF-8", skipNul = TRUE)
 ```
 
 What do these look like? Next we will take a look at the `head` of each of the three files. 
@@ -58,7 +58,7 @@ head(news, n = 3)
 head(twitter, n = 3)
 ```
 
-Find out the size of the files, # of lines, and words in each.
+Here the goal is to find out the size of the files, # of lines, and words in each.
 
 ```{r}
 ## Size of each file
@@ -86,7 +86,7 @@ rownames(stats) <- c("Blogs", "News", "Twitter")
 kable(stats)
 ```
 
-Visualize the lines, characters, and words in the documents
+In the next section we visualize the line counts and word counts in the documents
 
 ```{r}
 # plot prep
@@ -103,33 +103,38 @@ g.word.count <- g.word.count + geom_bar(stat = "identity") +
 
 # Preparing the Corpus 
 
-Now a document-feature matrix (aka document-term matrix), is created describing the frequency of n-grams, or sequences of n words. We use the dfm function, which tokenizes the stream of text into n-grams; converts the text to lowercase; and removes numbers, punctuation, and whitespaces.
-
-At this stage, it is not uncommon to remove stopwords - since the purpose of this project is to create a predictive text model, we will keep them. We filter for profane language, using a list of words available at [LDNOOBW](https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/blob/master/LICENSE) the profane words will be removed during building the `r dfm`
-
-```{r}
-library(quanteda)
-profanity <- readLines("profaneWords.txt", encoding = "UTF-8", skipNul = TRUE)
-
-```
-
-Work with a sample corpus to accomodate for insufficient processing performance in my local computing environment.
+To accomodate for insufficient processing performance in my local computing environment a sample of each file is made before proceeding to tokenize and create n-grams.
 ```{r}
 #Create a sample corpus to be processed
 blogs_sample <- blogs[sample(length(blogs), 0.1*length(blogs))]
 news_sample <- news[sample(length(news), 0.1*length(news))]
 twitter_sample <- twitter[sample(length(twitter), 0.1*length(twitter))]
-corpus_sample <- corpus(c(blogs_sample, news_sample, twitter_sample))
+combinedSampleCorpus <- corpus(c(blogs_sample, news_sample, twitter_sample))
+```
+
+
+Now a document-feature matrix (aka document-term matrix), is created describing the frequency of n-grams, or sequences of n words. We use the dfm function, which tokenizes the stream of text into n-grams; converts the text to lowercase; and removes numbers, punctuation, and whitespaces.
+
+At this stage, it is not uncommon to remove stopwords - since the purpose of this project is to create a predictive text model, they will be kept. However, we filter for profane language, using a list of words available at [LDNOOBW](https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/blob/master/LICENSE) the profane words will be removed during building the `quanteda dfm`
+
+```{r}
+library(quanteda)
+profanity <- readLines("profaneWords.txt", encoding = "UTF-8", skipNul = TRUE)
+```
+
+Create a `quanteda dfm` using the `corpus_sample`
+```{r}
+corpusDFM <- dfm(corpus_sample,remove = profanity, stem = FALSE, remove_punct = TRUE,  ngrams=c(1,2,3))
 ```
 
 ```{r}
 blogs_corpus <- corpus(blogs_sample)
 news_corpus <- corpus(news_sample)
-twitter_sample <- corpus(twitter_sample)
+twitter_corpus <- corpus(twitter_sample)
 ```
 
 ```{r}
-blogtokens <- tokens(blogs_sample, what = "fasterword", remove_punct  )
+blogtokens <- tokens(blogs_sample, remove_numbers = TRUE, remove_punct = TRUE, remove_separators = TRUE)
 tokens_ngrams(blogs_sample, n=2L)
 ```
 
@@ -164,10 +169,7 @@ for (i in 1:4) {
 multiplot(p1, p2, p3, p4, cols=2)
 ```
 
-Create a `quanteda dfm` using the `corpus_sample`
-```{r}
-corpusDFM <- dfm(corpus_sample,remove = profanity, stem = FALSE, remove_punct = TRUE,  ngrams=c(1,2,3))
-```
+
 
 ```{r}
 data <- as.data.frame(topfeatures(corpusDFM, n = length(featnames(corpusDFM))))
