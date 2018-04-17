@@ -28,20 +28,34 @@ dataURL <- "https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-S
 download.file(dataURL, destfile = "./data")
 ```
 
+```{r}
+if(!file.exists("./final/en_US/en_US.news.txt")||
+     !file.exists("./final/en_US/en_US.blogs.txt")||    
+     !file.exists("./final/en_US/en_US.twitter.txt"))
+  {  
+    if(!file.exists("Coursera-SwiftKey.zip"))
+      {    
+        download.file(url="https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip",  destfile="Coursera-SwiftKey.zip", quiet=T)
+      }
+    unzip(zipfile="Coursera-SwiftKey.zip")
+  }
+```
+
+
 #Data Import and Summary Statistics
 
 The data for the project comes from corpora that were collected from publicly available sources by a web crawler. For this analysis the three files in English will be used. The data was downloaded to the working directory and analyzed from there.
 
 ```{r}
-list.files(pattern = "^en_US.*txt$")
+list.files(pattern = "^en_US.*txt$",path = "./final/en_US")
 ```
 
 Using `readLines` the text files are read as saved as character vectors.
 
 ```{r}
-blogs <- readLines("./en_US/en_US.blogs.txt", encoding = "UTF-8", skipNul = TRUE)
-news <- readLines("./en_US/en_US.news.txt", encoding = "UTF-8", skipNul = TRUE)
-twitter <- readLines("./en_US/en_US.twitter.txt", encoding = "UTF-8", skipNul = TRUE)
+blogs <- readLines("./final/en_US/en_US.blogs.txt", encoding = "UTF-8", skipNul = TRUE)
+news <- readLines("./final/en_US/en_US.news.txt", encoding = "UTF-8", skipNul = TRUE)
+twitter <- readLines("./final/en_US/en_US.twitter.txt", encoding = "UTF-8", skipNul = TRUE)
 ```
 
 What do these look like? Next we will take a look at the `head` of each of the three files. 
@@ -109,7 +123,7 @@ To accomodate for insufficient processing performance in my local computing envi
 blogs_sample <- blogs[sample(length(blogs), 0.1*length(blogs))]
 news_sample <- news[sample(length(news), 0.1*length(news))]
 twitter_sample <- twitter[sample(length(twitter), 0.1*length(twitter))]
-combinedSampleCorpus <- corpus(c(blogs_sample, news_sample, twitter_sample))
+combinedSampleCorpus <- quanteda::corpus(c(blogs_sample, news_sample, twitter_sample))
 ```
 
 
@@ -128,14 +142,19 @@ corpusDFM <- dfm(corpus_sample,remove = profanity, stem = FALSE, remove_punct = 
 ```
 
 ```{r}
-blogs_corpus <- corpus(blogs_sample)
-news_corpus <- corpus(news_sample)
-twitter_corpus <- corpus(twitter_sample)
+#blogs_corpus <- corpus(blogs_sample)
+#news_corpus <- corpus(news_sample)
+#twitter_corpus <- corpus(twitter_sample)
 ```
 
 ```{r}
-blogtokens <- tokens(blogs_sample, remove_numbers = TRUE, remove_punct = TRUE, remove_separators = TRUE)
-tokens_ngrams(blogs_sample, n=2L)
+corpusTokens <- tokens(cSC, remove_numbers = TRUE, remove_punct = TRUE, remove_separators = TRUE)
+corpusUnigrams <- tokens_ngrams(corpusTokens, n= 1L)
+corpusBigrams <- tokens_ngrams(corpusTokens, n=2L)
+corpusTrigrams <- tokens_ngrams(corpusTokens, n=3L)
+dfmUni <- dfm(corpusUnigrams,remove = profanity, stem = FALSE)
+dfmBi <- dfm(corpusBigrams,remove = profanity, stem = FALSE)
+dfmTri <- dfm(corpusTrigrams, remove = profanity, stem = FALSE)
 ```
 
 ```{r}
