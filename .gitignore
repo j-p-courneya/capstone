@@ -12,3 +12,6 @@ en_US
 profaneWords.txt
 en
 Coursera-SwiftKey.zip
+biGramTable2.rds
+triGramTable2.rds
+uniGramTable2.rds
