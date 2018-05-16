@@ -24,6 +24,15 @@ system.time(biGramLUT <- biGramTable2 %>%
 
 object.size(biGramLUT)
 
+#building uni-gram LUT using piping instead of intermediate steps
+
+system.time(uniGramLUT <- uniGramTable2 %>%
+              group_by(lastTerm) %>%
+              mutate(Score = (0.4 * 0.4) * (frequency/sum(frequency))) %>%
+              filter(frequency >= 4))
+
+object.size(uniGramLUT)
+uniGramLUT5 <- head(uniGramLUT, n = 5)
 #function to create top n LUT's in case an application requires more than 5 results, default value is 5.
 topnLUT <- function(nGramLUT, n = 5){
   top_n(nGramLUT, n, Score)
